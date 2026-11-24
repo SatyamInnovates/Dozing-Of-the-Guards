@@ -4,20 +4,27 @@ const playerSprite = new Image();
 let currentFrame = 0;
 let frameTimer = 0;
 const frameDuration = 125;
+const background = new Image();
 
+background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+window.addEventListener("resize", resizeCanvas);
+
+resizeCanvas();
 
 
 const player = {
-    x: 100,
-    y: 100,
-    size: 180,
-    speed: 5
+    x: 120,
+    y: canvas.height - 280 - 10,
+    size: 280,
+    speed: 4
 };
-
 const keys = {};
 
 window.addEventListener("keydown", (e) => {
@@ -50,11 +57,21 @@ function update() {
     player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 }
 
+
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingEnabled = false;
 
-    const size=180;
+    if (background.complete && background.naturalWidth > 0) {
+        ctx.drawImage(
+            background,
+            0, 0,
+            canvas.width,
+            canvas.height
+        );
+    }
+
+    ctx.imageSmoothingEnabled = false;
 
     if (playerSprite.complete && playerSprite.naturalWidth > 0) {
         const frameX = (currentFrame % 8) * 256;
@@ -82,6 +99,13 @@ function animateIdle(deltaTime) {
 
     }
 }
+
+
+
+
+
+
+
 function gameLoop(timestamp) {
     if (!gameLoop.lastTime) {
         gameLoop.lastTime = timestamp;
