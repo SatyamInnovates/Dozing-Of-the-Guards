@@ -14,6 +14,19 @@ let linkX;
 let linkY;
 const linkWidth = 180;
 const linkHeight = 25;
+let dialogueIndex = 0;
+let storyStarted = false;
+
+const dialogues = [
+    "System:  An important task is running on the user's laptop",
+    "System:  Oh no! It's a long task,and the user isn't near the laptop!!",
+    "System:  Wait.. the laptop lid is closed too!! The task could be interrupted!!",
+    "DozeGuard:  NO!! I'm here. Don't worry,system. Your session is under my protection!"
+]
+
+
+
+
 
 background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
@@ -30,10 +43,13 @@ resizeCanvas();
 
 const player = {
     x: 120,
-    y: canvas.height - 280 - 10,
+    y: -280,
     size: 280,
     speed: 4
 };
+let botDropping = false;
+const landingY = canvas.height - 280 - 10;
+
 const keys = {};
 
 window.addEventListener("keydown", (e) => {
@@ -67,6 +83,17 @@ function update() {
 }
 
 
+function animateBotDrop(){
+    if (botDropping){
+        player.y += 12;
+
+        if (player.y >= landingY){
+            player.y =  landingY;
+            botDropping = false;
+        }
+    }
+}
+
 
 function draw() {
     
@@ -95,6 +122,9 @@ function draw() {
     }
     if (gameState === "menu"){
         drawMenu()
+    }
+    if (gameState === "story"){
+        drawDialogue();
     }
 }
 
@@ -157,9 +187,39 @@ function drawMenu() {
     ctx.shadowBlur = 0;   
 }
 
+function drawDialogue() {    
+    ctx.fillStyle = "#071a32";
+    ctx.fillRect(
+        canvas.width * 0.1,
+        canvas.height - 150,
+        canvas.width * 0.7,
+        110
+    );
 
+    ctx.font = "18px Arial";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
 
+    ctx.fillText(
+        dialogues[dialogueIndex],
+        canvas.width * 0.13,
+        canvas.height - 100
+    );
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#38bdf8";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
 
+    ctx.fillText(
+        "CLICK TO CONTINUE →",
+        canvas.width * 0.78,
+        canvas.height - 55
+    );
+
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
+}
 
 let mousex;
 let mousey;
@@ -174,6 +234,7 @@ canvas.addEventListener("mousemove",(e) => {
 })
 
 
+
 function checkhover(){
     isButtonHovered = false;
     isLinkHovered = false;
@@ -186,18 +247,44 @@ function checkhover(){
 }
 
 
-canvas.addEventListener("click" ,(e) => {
-    mousex = e.offsetX
-    mousey = e.offsetY
+canvas.addEventListener("click", (e) => {
+    const previousState = gameState;
 
-    if (mousex >= buttonx && mousex <= buttonx + buttonWidth && mousey >= buttony && mousey <= buttony + buttonHeight){
-        gameState = "playing"
-    };
+    mousex = e.offsetX;
+    mousey = e.offsetY;
 
-    if (mousex >= linkX && mousex <= linkX + linkWidth && mousey >= linkY && mousey <= linkY + linkHeight){
-        window.open("https://dozeguard.vercel.app/","_blank");
+    if (
+        previousState === "menu" &&
+        mousex >= buttonx &&
+        mousex <= buttonx + buttonWidth &&
+        mousey >= buttony &&
+        mousey <= buttony + buttonHeight
+    ) {
+        gameState = "story";
+        dialogueIndex = 0;
     }
-})
+
+    if (
+        previousState === "menu" &&
+        mousex >= linkX &&
+        mousex <= linkX + linkWidth &&
+        mousey >= linkY &&
+        mousey <= linkY + linkHeight
+    ) {
+        window.open("https://dozeguard.vercel.app/", "_blank");
+    }
+
+    if (previousState === "story") {
+        dialogueIndex++;
+        if (dialogueIndex == 3){
+            botDropping = true;
+            player.y = -player.size
+        }
+        if (dialogueIndex >= dialogues.length) {
+            gameState = "playing";
+        }
+    }
+});
 
 
 
@@ -216,6 +303,7 @@ function gameLoop(timestamp) {
 
     animateIdle(deltaTime);
     checkhover();
+    animateBotDrop()
     draw();
     requestAnimationFrame(gameLoop);
 
