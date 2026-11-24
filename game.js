@@ -25,9 +25,6 @@ const dialogues = [
 ]
 
 
-
-
-
 background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
 
@@ -35,6 +32,7 @@ function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 }
+
 
 window.addEventListener("resize", resizeCanvas);
 
@@ -47,6 +45,7 @@ const player = {
     size: 280,
     speed: 4
 };
+let facing = "right";
 let botDropping = false;
 const landingY = canvas.height - 280 - 10;
 
@@ -60,6 +59,7 @@ window.addEventListener("keyup", (e) => {
     keys[e.key.toLowerCase()] = false;
 });
 
+
 function update() {
     if (keys["w"] || keys["arrowup"]) {
         player.y -= player.speed;
@@ -71,10 +71,12 @@ function update() {
 
     if (keys["a"] || keys["arrowleft"]) {
         player.x -= player.speed;
+        facing = 'left';
     }
 
     if (keys["d"] || keys["arrowright"]) {
         player.x += player.speed;
+        facing = "right";
     }
 
     
@@ -112,13 +114,23 @@ function draw() {
         const frameX = (currentFrame % 8) * 256;
         const frameY = Math.floor(currentFrame / 8) * 256;
 
-        ctx.drawImage(
-            playerSprite,
-            frameX, frameY,
-            256, 256,
-            player.x, player.y,
-            player.size, player.size
-        );
+        ctx.save();
+
+        if (facing == "left"){
+            ctx.translate(player.x + player.size, 0);
+            ctx.scale(-1,1);
+
+            ctx.drawImage(
+                playerSprite,frameX,frameY,256,256,0,player.y,player.size,player.size
+            );
+
+        }else {
+            ctx.drawImage(playerSprite,frameX, frameY,256, 256,player.x, player.y,player.size, player.size);
+        }
+
+        ctx.restore();
+
+
     }
     if (gameState === "menu"){
         drawMenu()
