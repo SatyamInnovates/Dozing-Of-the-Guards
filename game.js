@@ -4,7 +4,16 @@ const playerSprite = new Image();
 let currentFrame = 0;
 let frameTimer = 0;
 const frameDuration = 125;
+let gameState = "menu";
 const background = new Image();
+let buttonx;
+let buttony;
+const buttonWidth = 240;
+const buttonHeight = 55;
+let linkX;
+let linkY;
+const linkWidth = 180;
+const linkHeight = 25;
 
 background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
@@ -60,6 +69,7 @@ function update() {
 
 
 function draw() {
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (background.complete && background.naturalWidth > 0) {
@@ -70,9 +80,7 @@ function draw() {
             canvas.height
         );
     }
-
     ctx.imageSmoothingEnabled = false;
-
     if (playerSprite.complete && playerSprite.naturalWidth > 0) {
         const frameX = (currentFrame % 8) * 256;
         const frameY = Math.floor(currentFrame / 8) * 256;
@@ -85,7 +93,11 @@ function draw() {
             player.size, player.size
         );
     }
+    if (gameState === "menu"){
+        drawMenu()
+    }
 }
+
 
 
 function animateIdle(deltaTime) {
@@ -101,7 +113,91 @@ function animateIdle(deltaTime) {
 }
 
 
+function drawMenu() {
+    const menux = canvas.width * 0.65;
+    const menuy = canvas.height * 0.35;
+    const glow = 15 + Math.sin(Date.now() / 180) * 8;
+    ctx.font = "bold 64px Arial";
+    ctx.fillStyle = "#00aaff";
+    ctx.textAlign = "center";
+    ctx.fillText("DOZEGUARD" ,menux,menuy)
+    buttonx = menux - 120;
+    buttony = menuy + 70;
 
+    ctx.shadowBlur = isButtonHovered ? glow : 0;
+    ctx.shadowColor = "greenyellow";
+    ctx.fillStyle = "#087cff";
+    ctx.fillRect(buttonx, buttony, buttonWidth, buttonHeight);
+    ctx.font = "bold 22px Arial";
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+
+    ctx.fillText(
+    "START GAME",
+    buttonx + buttonWidth / 2,
+    buttony + 36
+    );
+    ctx.shadowBlur = 0;
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#94a3b8";
+    ctx.textAlign = "center";
+
+    ctx.fillText(
+        "An interactive promotional experience by DozeGuard",
+        menux,
+        buttony+ 95
+    );
+    linkX = menux - linkWidth / 2;
+    linkY = buttony + 113;
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#38bdf8";
+    ctx.shadowBlur = isLinkHovered ? glow : 0;
+    ctx.shadowColor = "greenyellow";
+    ctx.fillText("Discover DozeGuard ↗", linkX + linkWidth / 2, linkY + linkHeight / 2);
+    ctx.shadowBlur = 0;   
+}
+
+
+
+
+
+let mousex;
+let mousey;
+let isButtonHovered = false;
+let isLinkHovered = false;
+
+
+canvas.addEventListener("mousemove",(e) => {
+
+    mousex = e.offsetX;
+    mousey = e.offsetY;
+})
+
+
+function checkhover(){
+    isButtonHovered = false;
+    isLinkHovered = false;
+    if(mousex >= buttonx && mousex <= buttonx + buttonWidth && mousey >= buttony && mousey <= buttony + buttonHeight){
+        isButtonHovered = true;
+    }
+    if (mousex >= linkX && mousex <= linkX + linkWidth && mousey >= linkY && mousey <= linkY + linkHeight){
+        isLinkHovered = true;
+    }
+}
+
+
+canvas.addEventListener("click" ,(e) => {
+    mousex = e.offsetX
+    mousey = e.offsetY
+
+    if (mousex >= buttonx && mousex <= buttonx + buttonWidth && mousey >= buttony && mousey <= buttony + buttonHeight){
+        gameState = "playing"
+    };
+
+    if (mousex >= linkX && mousex <= linkX + linkWidth && mousey >= linkY && mousey <= linkY + linkHeight){
+        window.open("https://dozeguard.vercel.app/","_blank");
+    }
+})
 
 
 
@@ -114,13 +210,16 @@ function gameLoop(timestamp) {
     const deltaTime = timestamp - gameLoop.lastTime;
     gameLoop.lastTime = timestamp;
 
+    if (gameState === "playing") {
+        update();
+    }
+
     animateIdle(deltaTime);
-
-    update();
+    checkhover();
     draw();
-
     requestAnimationFrame(gameLoop);
 
 }
 
 requestAnimationFrame(gameLoop);
+
