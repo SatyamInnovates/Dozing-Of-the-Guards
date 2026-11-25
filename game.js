@@ -2,6 +2,7 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const playerSprite = new Image();
 const walkingSprite = new Image();
+const teleportSprite = new Image();
 let currentFrame = 0;
 let frameTimer = 0;
 const frameDuration = 125;
@@ -22,6 +23,8 @@ let walkFrame = 0;
 let walkFrameTimer = 0;
 const walkFrameDuration = 120;
 let isWalking = false;
+let wasWalking = false;
+
 const dialogues = [
     "System:  An important task is running on the user's laptop",
     "System:  Oh no! It's a long task,and the user isn't near the laptop!!",
@@ -30,11 +33,18 @@ const dialogues = [
 ]
 
 
-
+let teleporting = false;
+let teleportFrame = 0;
+let teleportFrameTimer = 0;
+let teleportTarget = null;
+const teleportFrameDuration = 60;
+let transitionTimer = 0;
+const  transitionDuration =  150;
 
 background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
 walkingSprite.src = "assets/mech-bot/mech-bot-march.png";
+teleportSprite.src = "assets/mech-bot/dozeguard-teleport-sheet.png"
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -44,6 +54,8 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 
 resizeCanvas();
+
+
 
 const player = {
     x: 120,
@@ -72,7 +84,11 @@ const platforms = [
 ];
 
 
+
 const keys = {};
+
+
+
 
 
 window.addEventListener("keydown", (e) => {
@@ -100,16 +116,18 @@ function teleport(){
         }
     }
 
-    if (selectedPlatform !== null){
-        player.y = selectedPlatform.y - player.size;
-        jumpRemaining = maxJumps;
-        jumpVelocity = 0;
-        isJumping = false;
+    if (selectedPlatform !== null && !teleporting){
+        teleportTarget = selectedPlatform;
+
+        teleporting = true;
+        teleportFrame = 0;
+        teleportFrameTimer = 0;
     }
 }
 
 
 function update() {
+    if (teleporting) return;
     isWalking = false;
     if (keys["w"] || keys["arrowup"]){
         
@@ -176,7 +194,6 @@ function animateBotDrop(){
 
 
 function draw() {
-    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (background.complete && background.naturalWidth > 0) {
@@ -187,8 +204,32 @@ function draw() {
             canvas.height
         );
     }
-    ctx.imageSmoothingEnabled = false;
-    if (playerSprite.complete && playerSprite.naturalWidth > 0) {
+    if (teleporting) {
+        const frameX = (teleportFrame % 10) * 256;
+        const frameY = Math.floor(teleportFrame / 10) * 256;
+
+        ctx.save();
+
+        if (facing === "left") {
+            ctx.translate(player.x + player.size, 0);
+            ctx.scale(-1, 1);
+
+            ctx.drawImage(
+                teleportSprite,
+                frameX, frameY, 256, 256,
+                0, player.y, player.size, player.size
+            );
+        } else {
+            ctx.drawImage(
+                teleportSprite,
+                frameX, frameY, 256, 256,
+                player.x, player.y, player.size, player.size
+            );
+        }
+
+        ctx.restore();
+    }
+    else if (playerSprite.complete && playerSprite.naturalWidth > 0) {
         const activeSprite = isWalking ? walkingSprite : playerSprite;
         const activeFrame = isWalking ? walkFrame : currentFrame;
         const frameX = isWalking ? walkFrame * 256 : (currentFrame % 8) * 256;
@@ -210,9 +251,10 @@ function draw() {
         }
 
         ctx.restore();
-
-
     }
+
+
+ 
     if (gameState === "menu"){
         drawMenu()
     }
@@ -245,6 +287,31 @@ function animateWalk(deltatime){
     }
 }
 
+
+function animateTeleport(deltaTime){
+    if (!teleporting) return;
+
+    teleportFrameTimer += deltaTime;
+    if(teleportFrameTimer >= teleportFrameDuration){
+        teleportFrameTimer -=  teleportFrameDuration;
+        teleportFrame++;
+
+        if (teleportFrame === 10){
+            if (teleportTarget){
+                player.y = teleportTarget.y - player.size;
+                jumpRemaining =maxJumps;
+                jumpVelocity = 0;
+                isJumping = false
+            }
+        }
+        if (teleportFrame >= 20){
+                teleporting =false;
+                teleportFrame = 0;
+                teleportFrameTimer = 0;
+                teleportTarget = null
+            }
+    }
+}
 
 
 function drawMenu() {
@@ -403,7 +470,16 @@ function gameLoop(timestamp) {
 
     if (gameState === "playing") {
         update();
+        
     }
+    if(isWalking !== wasWalking){
+        transitionTimer = transitionDuration;
+        wasWalking = isWalking;
+    }
+    if (transitionTimer > 0){
+        transitionTimer -= deltaTime
+    }
+    animateTeleport(deltaTime);
 
     if (isWalking) {
         animateWalk(deltaTime);
@@ -416,6 +492,7 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 
 }
+
 
 requestAnimationFrame(gameLoop);
 
