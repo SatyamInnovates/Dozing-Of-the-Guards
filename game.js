@@ -45,7 +45,6 @@ window.addEventListener("resize", resizeCanvas);
 
 resizeCanvas();
 
-
 const player = {
     x: 120,
     y: -280,
@@ -55,21 +54,37 @@ const player = {
 let facing = "right";
 let botDropping = false;
 const landingY = canvas.height - 280 - 10;
-let jumpRemaining = 6;
-const maxJumps = 2;
-const  jumpStrength = 15;
-let jumpVelocity = 0;
-const gravity = 0.7;
 const groundY = canvas.height - player.size - 10;
+const maxJumps = 2;
+let jumpRemaining = maxJumps;
+const normalJumpStrength = 15;
+const normalGravity = 0.7;
+const superJumpStrength = 22;
+const superGravity = 0.4;
+let jumpStrength = normalJumpStrength;
+let gravity = normalGravity;
+let jumpVelocity = 0;
+let isJumping = false;
+const platforms = [
+    { x: 300, y: 500, width: 200, height: 20 },
+    { x: 600, y: 400, width: 200, height: 20 },
+    { x: 900, y: 300, width: 200, height: 20 }
+];
+
 
 const keys = {};
 
 
 window.addEventListener("keydown", (e) => {
     keys[e.key.toLowerCase()] = true;
-    if (e.code === "Space" && !e.repeat && jumpRemaining > 0){
+    if (e.code === "Space" && !e.repeat && jumpRemaining > 0) {
         jumpVelocity = -jumpStrength;
         jumpRemaining--;
+        isJumping = true;
+    }
+
+    if (e.key.toLowerCase() === "w" && !e.repeat && gameState === "playing"){
+        teleport();
     }
 });
 
@@ -77,19 +92,35 @@ window.addEventListener("keyup", (e) => {
     keys[e.key.toLowerCase()] = false;
 });
 
+function teleport(){
+    let selectedPlatform = null;
+    for(let i=0;platforms.length > i;i++){
+        if(platforms[i].y < player.y && (selectedPlatform === null || platforms[i].y > selectedPlatform.y)){
+            selectedPlatform = platforms[i];
+        }
+    }
+
+    if (selectedPlatform !== null){
+        player.y = selectedPlatform.y - player.size;
+        jumpRemaining = maxJumps;
+        jumpVelocity = 0;
+        isJumping = false;
+    }
+}
+
 
 function update() {
     isWalking = false;
-    if (keys["w"] || keys["arrowup"]) {
-        player.y -= player.speed;
+    if (keys["w"] || keys["arrowup"]){
+        
+        isWalking = true;
+    }
+    if (keys["s"] || keys["arrowdown"]){
+    
         isWalking = true;
     }
 
-    if (keys["s"] || keys["arrowdown"]) {
-        player.y += player.speed;
-        isWalking = true;
-    }
-
+  
     if (keys["a"] || keys["arrowleft"]) {
         player.x -= player.speed;
         facing = 'left';
@@ -106,12 +137,26 @@ function update() {
     player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
     player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 
-    player.y += jumpVelocity;
-    jumpVelocity += gravity;
+    if (!isJumping && player.y < groundY) {
+        player.y += gravity;
+    }
 
-    if (player.y >= groundY){
+
+    if (isJumping) {
+        player.y += jumpVelocity;
+        jumpVelocity += gravity;
+
+        
+        if (player.y >= groundY) {
+            player.y = groundY;
+            jumpVelocity = 0;
+            jumpRemaining = maxJumps;
+            isJumping = false;
+        }
+    }
+
+    if (player.y >= groundY) {
         player.y = groundY;
-        jumpVelocity = 0;
         jumpRemaining = maxJumps;
     }
 }
