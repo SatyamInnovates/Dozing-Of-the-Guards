@@ -1,6 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const playerSprite = new Image();
+const walkingSprite = new Image();
 let currentFrame = 0;
 let frameTimer = 0;
 const frameDuration = 125;
@@ -17,6 +18,10 @@ const linkHeight = 25;
 let dialogueIndex = 0;
 let storyStarted = false;
 
+let walkFrame = 0;
+let walkFrameTimer = 0;
+const walkFrameDuration = 120;
+let isWalking = false;
 const dialogues = [
     "System:  An important task is running on the user's laptop",
     "System:  Oh no! It's a long task,and the user isn't near the laptop!!",
@@ -25,9 +30,11 @@ const dialogues = [
 ]
 
 
+
+
 background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
-
+walkingSprite.src = "assets/mech-bot/mech-bot-march.png";
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -48,11 +55,22 @@ const player = {
 let facing = "right";
 let botDropping = false;
 const landingY = canvas.height - 280 - 10;
+let jumpRemaining = 6;
+const maxJumps = 2;
+const  jumpStrength = 15;
+let jumpVelocity = 0;
+const gravity = 0.7;
+const groundY = canvas.height - player.size - 10;
 
 const keys = {};
 
+
 window.addEventListener("keydown", (e) => {
     keys[e.key.toLowerCase()] = true;
+    if (e.code === "Space" && !e.repeat && jumpRemaining > 0){
+        jumpVelocity = -jumpStrength;
+        jumpRemaining--;
+    }
 });
 
 window.addEventListener("keyup", (e) => {
@@ -61,28 +79,43 @@ window.addEventListener("keyup", (e) => {
 
 
 function update() {
+    isWalking = false;
     if (keys["w"] || keys["arrowup"]) {
         player.y -= player.speed;
+        isWalking = true;
     }
 
     if (keys["s"] || keys["arrowdown"]) {
         player.y += player.speed;
+        isWalking = true;
     }
 
     if (keys["a"] || keys["arrowleft"]) {
         player.x -= player.speed;
         facing = 'left';
+        isWalking = true;
     }
 
     if (keys["d"] || keys["arrowright"]) {
         player.x += player.speed;
         facing = "right";
+        isWalking = true;
     }
 
     
     player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
     player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+
+    player.y += jumpVelocity;
+    jumpVelocity += gravity;
+
+    if (player.y >= groundY){
+        player.y = groundY;
+        jumpVelocity = 0;
+        jumpRemaining = maxJumps;
+    }
 }
+
 
 
 function animateBotDrop(){
@@ -111,8 +144,11 @@ function draw() {
     }
     ctx.imageSmoothingEnabled = false;
     if (playerSprite.complete && playerSprite.naturalWidth > 0) {
-        const frameX = (currentFrame % 8) * 256;
-        const frameY = Math.floor(currentFrame / 8) * 256;
+        const activeSprite = isWalking ? walkingSprite : playerSprite;
+        const activeFrame = isWalking ? walkFrame : currentFrame;
+        const frameX = isWalking ? walkFrame * 256 : (currentFrame % 8) * 256;
+        const frameY = isWalking ? 0 : Math.floor(currentFrame / 8) * 256;
+
 
         ctx.save();
 
@@ -121,11 +157,11 @@ function draw() {
             ctx.scale(-1,1);
 
             ctx.drawImage(
-                playerSprite,frameX,frameY,256,256,0,player.y,player.size,player.size
+                activeSprite,frameX,frameY,256,256,0,player.y,player.size,player.size
             );
 
         }else {
-            ctx.drawImage(playerSprite,frameX, frameY,256, 256,player.x, player.y,player.size, player.size);
+            ctx.drawImage(activeSprite,frameX, frameY,256, 256,player.x, player.y,player.size, player.size);
         }
 
         ctx.restore();
@@ -153,6 +189,17 @@ function animateIdle(deltaTime) {
 
     }
 }
+
+
+function animateWalk(deltatime){
+    walkFrameTimer += deltatime;
+
+    if(walkFrameTimer >= walkFrameDuration){
+        walkFrame = (walkFrame + 1) % 8;
+        walkFrameTimer -= walkFrameDuration;
+    }
+}
+
 
 
 function drawMenu() {
@@ -313,7 +360,11 @@ function gameLoop(timestamp) {
         update();
     }
 
-    animateIdle(deltaTime);
+    if (isWalking) {
+        animateWalk(deltaTime);
+    } else {
+        animateIdle(deltaTime);
+    }
     checkhover();
     animateBotDrop()
     draw();
