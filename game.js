@@ -50,6 +50,21 @@ background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
 walkingSprite.src = "assets/mech-bot/mech-bot-march.png";
 teleportSprite.src = "assets/mech-bot/dozeguard-teleport-sheet.png"
+
+
+
+const backgroundMusic = new Audio("assets/sounds/background.mp3");
+const ClickMusic = new Audio("assets/sounds/click.mp3");
+const JumpMusic = new Audio("assets/sounds/jump.mp3") ;
+
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.2;
+ClickMusic.volume = 0.5;
+JumpMusic.volume = 0.5;
+
+
+
+
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -87,13 +102,19 @@ const platforms = [
 ];
 
 
+
+
+
 const keys = {};
 window.addEventListener("keydown", (e) => {
     keys[e.key.toLowerCase()] = true;
     if (e.code === "Space" && !e.repeat && jumpRemaining > 0) {
+
         jumpVelocity = -jumpStrength;
         jumpRemaining--;
         isJumping = true;
+        JumpMusic.currentTime = 0;
+        JumpMusic.play();
     }
 
     if (e.key.toLowerCase() === "w" && !e.repeat && gameState === "playing"){
@@ -437,6 +458,11 @@ canvas.addEventListener("click", (e) => {
     ) {
         gameState = "story";
         dialogueIndex = 0;
+        ClickMusic.currentTime = 0;
+        ClickMusic.play();
+        backgroundMusic.play();
+        
+
     }
 
     if (
@@ -450,10 +476,14 @@ canvas.addEventListener("click", (e) => {
     }
 
     if (previousState === "story") {
+        ClickMusic.currentTime = 0;
+        ClickMusic.play();
         dialogueIndex++;
         if (dialogueIndex == 3){
             botDropping = true;
             player.y = -player.size
+            ClickMusic.currentTime = 0
+            ClickMusic.play()
         }
         if (dialogueIndex >= dialogues.length) {
             gameState = "playing";
