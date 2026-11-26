@@ -21,7 +21,7 @@ let storyStarted = false;
 
 let walkFrame = 0;
 let walkFrameTimer = 0;
-const walkFrameDuration = 120;
+const walkFrameDuration = 80;
 let isWalking = false;
 let wasWalking = false;
 
@@ -41,6 +41,7 @@ const teleportFrameDuration = 60;
 let transitionTimer = 0;
 const  transitionDuration =  150;
 
+
 background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
 walkingSprite.src = "assets/mech-bot/mech-bot-march.png";
@@ -55,24 +56,23 @@ window.addEventListener("resize", resizeCanvas);
 
 resizeCanvas();
 
-
-
 const player = {
     x: 120,
     y: -280,
     size: 280,
     speed: 4
 };
+
 let facing = "right";
 let botDropping = false;
 const landingY = canvas.height - 280 - 10;
 const groundY = canvas.height - player.size - 10;
-const maxJumps = 2;
+const maxJumps = 3;
 let jumpRemaining = maxJumps;
 const normalJumpStrength = 15;
-const normalGravity = 0.7;
-const superJumpStrength = 22;
-const superGravity = 0.4;
+const normalGravity = 0.8;
+const superJumpStrength = 30;
+const superGravity = 0.6;
 let jumpStrength = normalJumpStrength;
 let gravity = normalGravity;
 let jumpVelocity = 0;
@@ -84,13 +84,7 @@ const platforms = [
 ];
 
 
-
 const keys = {};
-
-
-
-
-
 window.addEventListener("keydown", (e) => {
     keys[e.key.toLowerCase()] = true;
     if (e.code === "Space" && !e.repeat && jumpRemaining > 0) {
@@ -152,6 +146,7 @@ function update() {
     }
 
     
+
     player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
     player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 
@@ -286,6 +281,7 @@ function animateWalk(deltatime){
         walkFrameTimer -= walkFrameDuration;
     }
 }
+
 
 
 function animateTeleport(deltaTime){
