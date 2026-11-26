@@ -56,11 +56,14 @@ teleportSprite.src = "assets/mech-bot/dozeguard-teleport-sheet.png"
 const backgroundMusic = new Audio("assets/sounds/background.mp3");
 const ClickMusic = new Audio("assets/sounds/click.mp3");
 const JumpMusic = new Audio("assets/sounds/jump.mp3") ;
+const TeleportMusic = new Audio("assets/sounds/teleport.mp3")
 
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.2;
 ClickMusic.volume = 0.5;
 JumpMusic.volume = 0.5;
+TeleportMusic.volume = 0.5;
+
 
 
 
@@ -105,6 +108,7 @@ const platforms = [
 
 
 
+
 const keys = {};
 window.addEventListener("keydown", (e) => {
     keys[e.key.toLowerCase()] = true;
@@ -141,12 +145,15 @@ function teleport(){
 
     if (selectedPlatform !== null && !teleporting){
         teleportTarget = selectedPlatform;
-
+        TeleportMusic.currentTime = 0.4;
+        TeleportMusic.play()
         teleporting = true;
         teleportFrame = 0;
         teleportFrameTimer = 0;
     }
 }
+
+
 
 
 
