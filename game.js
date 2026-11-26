@@ -19,6 +19,9 @@ const linkHeight = 25;
 let dialogueIndex = 0;
 let storyStarted = false;
 
+let landingY ;
+let groundY ;
+
 let walkFrame = 0;
 let walkFrameTimer = 0;
 const walkFrameDuration = 80;
@@ -31,6 +34,7 @@ const dialogues = [
     "System:  Wait.. the laptop lid is closed too!! The task could be interrupted!!",
     "DozeGuard:  NO!! I'm here. Don't worry,system. Your session is under my protection!"
 ]
+
 
 
 let teleporting = false;
@@ -49,30 +53,29 @@ teleportSprite.src = "assets/mech-bot/dozeguard-teleport-sheet.png"
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+
+    landingY = canvas.height - 280 - 10;
+    groundY = canvas.height - player.size - 10;
 }
 
 
-window.addEventListener("resize", resizeCanvas);
 
-resizeCanvas();
 
 const player = {
     x: 120,
     y: -280,
     size: 280,
-    speed: 4
+    speed: 5
 };
+
+
 
 let facing = "right";
 let botDropping = false;
-const landingY = canvas.height - 280 - 10;
-const groundY = canvas.height - player.size - 10;
 const maxJumps = 3;
 let jumpRemaining = maxJumps;
-const normalJumpStrength = 15;
-const normalGravity = 0.8;
-const superJumpStrength = 30;
-const superGravity = 0.6;
+const normalJumpStrength = 18;
+const normalGravity = 0.7;
 let jumpStrength = normalJumpStrength;
 let gravity = normalGravity;
 let jumpVelocity = 0;
@@ -102,6 +105,11 @@ window.addEventListener("keyup", (e) => {
     keys[e.key.toLowerCase()] = false;
 });
 
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas(); 
+
+
+
 function teleport(){
     let selectedPlatform = null;
     for(let i=0;platforms.length > i;i++){
@@ -118,6 +126,7 @@ function teleport(){
         teleportFrameTimer = 0;
     }
 }
+
 
 
 function update() {
