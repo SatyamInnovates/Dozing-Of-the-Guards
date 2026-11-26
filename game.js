@@ -66,6 +66,10 @@ TeleportMusic.volume = 0.5;
 
 
 
+let maxhealth = 1000;
+let health = maxhealth;
+
+
 
 
 function resizeCanvas() {
@@ -157,6 +161,7 @@ function teleport(){
 
 
 
+
 function update(deltaFrames) {
     if (teleporting) return;
     isWalking = false;
@@ -224,6 +229,51 @@ function animateBotDrop(){
 }
 
 
+function drawHealthBar() {
+    const barWidth = 240;
+    const barHeight = 65;
+    const x = 30;
+    const y = 30;
+
+    ctx.fillStyle = "#07111b";
+    ctx.fillRect(x, y, barWidth, barHeight);
+    ctx.strokeStyle = "#0d415f";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x, y, barWidth, barHeight);
+
+    ctx.fillStyle = "#a5b6c3";
+    ctx.font = "12px monospace";
+    ctx.fillText("ROBOT INTEGRITY", x + 12, y + 18);
+
+    const barX = x + 12;
+    const barY = y + 27;
+    const w = 216;
+    const h = 12;
+    const segments = 10;
+    const gap = 3;
+
+    const segmentWidth = (w - gap * (segments - 1)) / segments;
+
+    for (let i = 0; i < segments; i++) {
+        const segmentX = barX + i * (segmentWidth + gap);
+
+        ctx.fillStyle = "#152630";
+        ctx.fillRect(segmentX, barY, segmentWidth, h);
+
+        if (i < health / 10) {
+            ctx.fillStyle = "#35e6a1";
+            ctx.fillRect(segmentX, barY, segmentWidth, h);
+        }
+    }
+
+   
+    ctx.fillStyle = "#35e6a1";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText(`${health}%`, x + 12, y + 55);
+
+}
+
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -257,15 +307,16 @@ function draw() {
                 player.x, player.y, player.size, player.size
             );
         }
-
+        
         ctx.restore();
     }
+
     else if (playerSprite.complete && playerSprite.naturalWidth > 0) {
         const activeSprite = isWalking ? walkingSprite : playerSprite;
         const activeFrame = isWalking ? walkFrame : currentFrame;
         const frameX = isWalking ? walkFrame * 256 : (currentFrame % 8) * 256;
         const frameY = isWalking ? 0 : Math.floor(currentFrame / 8) * 256;
-
+    
 
         ctx.save();
 
@@ -284,8 +335,9 @@ function draw() {
         ctx.restore();
     }
 
+    
 
- 
+    drawHealthBar();
     if (gameState === "menu"){
         drawMenu()
     }
@@ -293,7 +345,6 @@ function draw() {
         drawDialogue();
     }
 }
-
 
 
 function animateIdle(deltaTime) {
