@@ -65,7 +65,7 @@ const player = {
     x: 120,
     y: -280,
     size: 280,
-    speed: 5
+    speed: 10
 };
 
 
@@ -74,8 +74,8 @@ let facing = "right";
 let botDropping = false;
 const maxJumps = 3;
 let jumpRemaining = maxJumps;
-const normalJumpStrength = 18;
-const normalGravity = 0.7;
+const normalJumpStrength = 20;
+const normalGravity = 1.1;
 let jumpStrength = normalJumpStrength;
 let gravity = normalGravity;
 let jumpVelocity = 0;
@@ -129,7 +129,7 @@ function teleport(){
 
 
 
-function update() {
+function update(deltaFrames) {
     if (teleporting) return;
     isWalking = false;
     if (keys["w"] || keys["arrowup"]){
@@ -143,13 +143,13 @@ function update() {
 
   
     if (keys["a"] || keys["arrowleft"]) {
-        player.x -= player.speed;
+        player.x -= player.speed * deltaFrames;
         facing = 'left';
         isWalking = true;
     }
 
     if (keys["d"] || keys["arrowright"]) {
-        player.x += player.speed;
+        player.x += player.speed * deltaFrames;
         facing = "right";
         isWalking = true;
     }
@@ -160,14 +160,13 @@ function update() {
     player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 
     if (!isJumping && player.y < groundY) {
-        player.y += gravity;
+        player.y += gravity * deltaFrames;
     }
 
 
     if (isJumping) {
-        player.y += jumpVelocity;
-        jumpVelocity += gravity;
-
+        jumpVelocity += gravity * deltaFrames;
+        player.y += jumpVelocity * deltaFrames;
         
         if (player.y >= groundY) {
             player.y = groundY;
@@ -464,17 +463,17 @@ canvas.addEventListener("click", (e) => {
 
 
 
-
 function gameLoop(timestamp) {
     if (!gameLoop.lastTime) {
         gameLoop.lastTime = timestamp;
     }
 
     const deltaTime = timestamp - gameLoop.lastTime;
+    const deltaFrames = deltaTime / (1000 / 60);
     gameLoop.lastTime = timestamp;
 
     if (gameState === "playing") {
-        update();
+        update(deltaFrames);
         
     }
     if(isWalking !== wasWalking){
@@ -500,4 +499,7 @@ function gameLoop(timestamp) {
 
 
 requestAnimationFrame(gameLoop);
+
+
+
 
