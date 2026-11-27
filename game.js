@@ -99,7 +99,9 @@ const boss = {
     size:360,
     speed:2,
     health:100,
+    maxHealth: 100
 }
+
 
 
 let facing = "right";
@@ -293,6 +295,54 @@ function drawHealthBar() {
 }
 
 
+
+function drawBossHealthBar() {
+    const barWidth = 500;
+    const barHeight = 65;
+    const x = (canvas.width - barWidth) / 2;
+    const y = 30;
+
+
+    ctx.fillStyle = "#07111b";
+    ctx.fillRect(x, y, barWidth, barHeight);
+    ctx.strokeStyle = "#5f1520";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, barWidth, barHeight);
+    ctx.fillStyle = "#ff4d5a";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText("POWERSAVER CORE", x + 12, y + 18);
+
+    const barX = x + 12;
+    const barY = y + 27;
+    const w = barWidth - 24;
+    const h = 12;
+    const segments = 20;
+    const gap = 3;
+
+    const segmentWidth = (w - gap * (segments - 1)) / segments;
+
+    for (let i = 0; i < segments; i++) {
+        const segmentX = barX + i * (segmentWidth + gap);
+
+       
+        ctx.fillStyle = "#30151a";
+        ctx.fillRect(segmentX, barY, segmentWidth, h);
+        if (i < (boss.health / boss.maxHealth) * segments) {
+            ctx.fillStyle = "#ff3548";
+            ctx.fillRect(segmentX, barY, segmentWidth, h);
+        }
+    }
+
+    const healthPercentage = Math.ceil(
+        (boss.health / boss.maxHealth) * 100
+    );
+
+    ctx.fillStyle = "#ff4d5a";
+    ctx.font = "bold 14px monospace";
+    ctx.fillText(`${healthPercentage}%`, x + 12, y + 55);
+}
+
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -359,6 +409,7 @@ function draw() {
     if (gameState === "playing"){
         drawHealthBar();
         drawBoss();
+        drawBossHealthBar();
     }
     
     if (gameState === "menu"){
