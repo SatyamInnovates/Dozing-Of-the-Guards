@@ -69,7 +69,11 @@ TeleportMusic.volume = 0.5;
 let maxhealth = 1000;
 let health = maxhealth;
 
-
+const bossImage = new Image()
+bossImage.src = "assets/enemy/Enemy-idle.png"
+let bossFrame = 0;
+let bossFrameTimer = 0;
+const bossFrameDuration = 125;
 
 
 function resizeCanvas() {
@@ -78,9 +82,8 @@ function resizeCanvas() {
 
     landingY = canvas.height - 280 - 10;
     groundY = canvas.height - player.size - 10;
+    boss.y = canvas.height - boss.size - 10;
 }
-
-
 
 
 const player = {
@@ -90,6 +93,13 @@ const player = {
     speed: 10
 };
 
+const boss = {
+    x: 800,
+    y:groundY,
+    size:360,
+    speed:2,
+    health:100,
+}
 
 
 let facing = "right";
@@ -159,9 +169,6 @@ function teleport(){
 
 
 
-
-
-
 function update(deltaFrames) {
     if (teleporting) return;
     isWalking = false;
@@ -228,6 +235,18 @@ function animateBotDrop(){
     }
 }
 
+function drawBoss() {
+    const frameX = (bossFrame % 8) * 256;
+    const frameY = Math.floor(bossFrame / 8) * 256;
+
+    ctx.drawImage(
+        bossImage,
+        frameX, frameY, 256, 256,
+        boss.x, boss.y, boss.size, boss.size
+    );
+}
+
+
 
 function drawHealthBar() {
     const barWidth = 240;
@@ -276,7 +295,7 @@ function drawHealthBar() {
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    
     if (background.complete && background.naturalWidth > 0) {
         ctx.drawImage(
             background,
@@ -334,10 +353,14 @@ function draw() {
 
         ctx.restore();
     }
-
     
 
-    drawHealthBar();
+    
+    if (gameState === "playing"){
+        drawHealthBar();
+        drawBoss();
+    }
+    
     if (gameState === "menu"){
         drawMenu()
     }
@@ -346,6 +369,14 @@ function draw() {
     }
 }
 
+function animateidleBoss(deltaTime){
+    bossFrameTimer += deltaTime;
+
+    if(bossFrameTimer >= bossFrameDuration){
+        bossFrameTimer -= bossFrameDuration;
+        bossFrame = (bossFrame + 1) % 10
+    }
+}
 
 function animateIdle(deltaTime) {
     frameTimer += deltaTime;
@@ -580,6 +611,7 @@ function gameLoop(timestamp) {
     }
     checkhover();
     animateBotDrop()
+    animateidleBoss(deltaTime)
     draw();
     requestAnimationFrame(gameLoop);
 
