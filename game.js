@@ -70,10 +70,19 @@ let maxhealth = 1000;
 let health = maxhealth;
 
 const bossImage = new Image()
-bossImage.src = "assets/enemy/Enemy-idle.png"
+const bosswalking = new Image();
+
+bossImage.src = "assets/enemy/Enemy-idle.png";
+bosswalking.src = "assets/enemy/Enemy-movement.png"
+
 let bossFrame = 0;
 let bossFrameTimer = 0;
 const bossFrameDuration = 125;
+
+let bossWalkFrame = 0;
+let bossWalkFrameTimer = 0;
+const bossWalkFrameDuration = 100;
+
 
 
 function resizeCanvas() {
@@ -97,9 +106,11 @@ const boss = {
     x: 800,
     y:groundY,
     size:360,
-    speed:2,
-    health:100,
-    maxHealth: 100
+    speed:8,
+    health:2000,
+    maxHealth: 2000,
+    isMoving: false,
+    facing: "right"
 }
 
 
@@ -114,14 +125,12 @@ let jumpStrength = normalJumpStrength;
 let gravity = normalGravity;
 let jumpVelocity = 0;
 let isJumping = false;
+
 const platforms = [
     { x: 300, y: 500, width: 200, height: 20 },
     { x: 600, y: 400, width: 200, height: 20 },
     { x: 900, y: 300, width: 200, height: 20 }
 ];
-
-
-
 
 
 
@@ -169,6 +178,27 @@ function teleport(){
     }
 }
 
+function moveBoss(deltaFrames) {
+    const playerCenter = player.x + player.size / 2;
+    const bossCenter = boss.x + boss.size / 2;
+    const distance = playerCenter - bossCenter;
+    const stopDistance = 180;
+
+    boss.isMoving = false;
+
+    if (Math.abs(distance) > stopDistance) {
+        const direction = Math.sign(distance);
+        boss.facing = direction > 0 ? "right" : "left";
+        const remainingDistance = Math.abs(distance) - stopDistance;
+        const movement = Math.min(
+            boss.speed * deltaFrames,
+            remainingDistance
+        );
+
+        boss.x += direction * movement;
+        boss.isMoving = true;
+    }
+}
 
 
 function update(deltaFrames) {
@@ -222,6 +252,7 @@ function update(deltaFrames) {
         player.y = groundY;
         jumpRemaining = maxJumps;
     }
+    moveBoss(deltaFrames)
 }
 
 
@@ -237,15 +268,42 @@ function animateBotDrop(){
     }
 }
 
-function drawBoss() {
-    const frameX = (bossFrame % 8) * 256;
-    const frameY = Math.floor(bossFrame / 8) * 256;
 
-    ctx.drawImage(
-        bossImage,
-        frameX, frameY, 256, 256,
-        boss.x, boss.y, boss.size, boss.size
-    );
+function drawBoss() {
+    let image;
+    let frame;
+
+    if (boss.isMoving) {
+        image = bosswalking;
+        frame = bossWalkFrame;
+    } else {
+        image = bossImage;
+        frame = bossFrame;
+    }
+
+    const frameX = (frame % 8) * 256;
+    const frameY = Math.floor(frame / 8) * 256;
+
+    ctx.save();
+
+    if (boss.facing === "left") {
+        ctx.translate(boss.x + boss.size, 0);
+        ctx.scale(-1, 1);
+
+        ctx.drawImage(
+            image,
+            frameX, frameY, 256, 256,
+            0, boss.y, boss.size, boss.size
+        );
+    } else {
+        ctx.drawImage(
+            image,
+            frameX, frameY, 256, 256,
+            boss.x, boss.y, boss.size, boss.size
+        );
+    }
+
+    ctx.restore();
 }
 
 
@@ -343,6 +401,7 @@ function drawBossHealthBar() {
 }
 
 
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
@@ -417,6 +476,17 @@ function draw() {
     }
     if (gameState === "story"){
         drawDialogue();
+    }
+}
+
+
+
+function animateBossWalking(deltaTime) {
+    bossWalkFrameTimer += deltaTime;
+
+    if (bossWalkFrameTimer >= bossWalkFrameDuration) {
+        bossWalkFrameTimer -= bossWalkFrameDuration;
+        bossWalkFrame = (bossWalkFrame + 1) % 8;
     }
 }
 
@@ -662,7 +732,12 @@ function gameLoop(timestamp) {
     }
     checkhover();
     animateBotDrop()
-    animateidleBoss(deltaTime)
+    
+    if (boss.isMoving) {
+        animateBossWalking(deltaTime);
+    } else {
+        animateidleBoss(deltaTime);
+    }
     draw();
     requestAnimationFrame(gameLoop);
 
@@ -670,7 +745,5 @@ function gameLoop(timestamp) {
 
 
 requestAnimationFrame(gameLoop);
-
-
 
 
