@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 const playerSprite = new Image();
 const walkingSprite = new Image();
 const teleportSprite = new Image();
+const attackSprite = new Image();
 let currentFrame = 0;
 let frameTimer = 0;
 const frameDuration = 125;
@@ -50,6 +51,7 @@ background.src = "assets/DozeGuard-background.png";
 playerSprite.src = "assets/mech-bot/mech-bot-idle.png";
 walkingSprite.src = "assets/mech-bot/mech-bot-march.png";
 teleportSprite.src = "assets/mech-bot/dozeguard-teleport-sheet.png"
+attackSprite.src = "assets/mech-bot/mech-bot-laser.png"
 
 
 
@@ -106,7 +108,7 @@ const boss = {
     x: 800,
     y:groundY,
     size:360,
-    speed:8,
+    speed:4,
     health:2000,
     maxHealth: 2000,
     isMoving: false,
