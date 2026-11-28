@@ -80,9 +80,12 @@ let health = maxhealth;
 
 const bossImage = new Image()
 const bosswalking = new Image();
+const bossAttackImage = new Image();
 
 bossImage.src = "assets/enemy/Enemy-idle.png";
 bosswalking.src = "assets/enemy/Enemy-movement.png"
+bossAttackImage.src = "assets/enemy/Enemy-attack.png"
+
 
 let bossFrame = 0;
 let bossFrameTimer = 0;
@@ -92,6 +95,15 @@ let bossWalkFrame = 0;
 let bossWalkFrameTimer = 0;
 const bossWalkFrameDuration = 100;
 
+
+let bossIsAttacking = false;
+let bossAttackCooldown = 0;
+let bossAttackFrame = 0;
+let bossAttackFrameTimer = 0;
+
+const bossAttackCooldownDuration = 1500;
+const bossAttackFrameDuration = 100;
+const bossAttackTotalFrames = 10;
 
 
 function resizeCanvas() {
@@ -163,6 +175,7 @@ window.addEventListener("keydown", (e) => {
         isAttacking = true;
         attackFrame = 0;
         attackFrameTimer = 0;
+        hasHitBoss = false;
     }
 });
 
@@ -194,6 +207,12 @@ function teleport(){
 }
 
 function moveBoss(deltaFrames) {
+
+    if (bossIsAttacking) {
+        boss.isMoving = false;
+        return;
+    }
+
     const playerCenter = player.x + player.size / 2;
     const bossCenter = boss.x + boss.size / 2;
     const distance = playerCenter - bossCenter;
@@ -203,8 +222,11 @@ function moveBoss(deltaFrames) {
 
     if (Math.abs(distance) > stopDistance) {
         const direction = Math.sign(distance);
+
         boss.facing = direction > 0 ? "right" : "left";
+
         const remainingDistance = Math.abs(distance) - stopDistance;
+
         const movement = Math.min(
             boss.speed * deltaFrames,
             remainingDistance
@@ -287,14 +309,21 @@ function animateBotDrop(){
 function drawBoss() {
     let image;
     let frame;
+    let attackimage;
 
-    if (boss.isMoving) {
+    if (bossIsAttacking) {
+    attackimage = bossAttackImage;
+    frame = bossAttackFrame;
+    }
+    else if (boss.isMoving) {
         image = bosswalking;
         frame = bossWalkFrame;
-    } else {
+    }
+    else {
         image = bossImage;
         frame = bossFrame;
     }
+
 
     const frameX = (frame % 8) * 256;
     const frameY = Math.floor(frame / 8) * 256;
@@ -320,6 +349,7 @@ function drawBoss() {
 
     ctx.restore();
 }
+
 
 
 
@@ -416,6 +446,7 @@ function drawBossHealthBar() {
 }
 
 
+
 function animateAttack(deltaTime){
     if (!isAttacking) return;
 
@@ -432,6 +463,67 @@ function animateAttack(deltaTime){
     }
 }
 
+
+
+function checkLaserHit(){
+    if (!isAttacking || hasHitBoss) return;
+
+    const attackRange = 400;
+    const playerCenter = player.x + player.size / 2;
+    const bossCenter = boss.x + boss.size / 2;
+    const distance = bossCenter - playerCenter;
+
+    const bossInFront = player.facing === "right" ? distance > 0 : distance < 0;
+
+    if(bossInFront && Math.abs(distance) <= attackRange){
+        boss.health -= attackDamge;
+        hasHitBoss = true;
+    }
+
+    
+}
+
+
+function startBossAttack(deltaTime) {
+    if (bossIsAttacking) return;
+
+    if (bossAttackCooldown > 0) {
+        bossAttackCooldown -= deltaTime;
+        return;
+    }
+
+    const playerCenter = player.x + player.size / 2;
+    const bossCenter = boss.x + boss.size / 2;
+
+    const distance = Math.abs(playerCenter - bossCenter);
+
+    const bossAttackRange = 250;
+
+    if (distance <= bossAttackRange) {
+        bossIsAttacking = true;
+        bossAttackFrame = 0;
+        bossAttackFrameTimer = 0;
+
+        bossAttackCooldown = bossAttackCooldownDuration;
+    }
+}
+
+function animateBossAttack(deltaTime) {
+    if (!bossIsAttacking) return;
+
+    bossAttackFrameTimer += deltaTime;
+
+    if (bossAttackFrameTimer >= bossAttackFrameDuration) {
+        bossAttackFrameTimer -= bossAttackFrameDuration;
+        bossAttackFrame++;
+
+        if (bossAttackFrame >= bossAttackTotalFrames) {
+            bossIsAttacking = false;
+            bossAttackFrame = 0;
+            bossAttackFrameTimer = 0;
+        }
+    }
+}
 
 
 
@@ -757,6 +849,10 @@ canvas.addEventListener("click", (e) => {
 
 
 
+
+
+
+
 function gameLoop(timestamp) {
     if (!gameLoop.lastTime) {
         gameLoop.lastTime = timestamp;
@@ -768,17 +864,21 @@ function gameLoop(timestamp) {
 
     if (gameState === "playing") {
         update(deltaFrames);
+        startBossAttack(deltaTime);
         
     }
-    if(isWalking !== wasWalking){
+
+    if (isWalking !== wasWalking) {
         transitionTimer = transitionDuration;
         wasWalking = isWalking;
     }
-    if (transitionTimer > 0){
-        transitionTimer -= deltaTime
-    }
-    animateTeleport(deltaTime);
 
+    if (transitionTimer > 0) {
+        transitionTimer -= deltaTime;
+    }
+
+    animateTeleport(deltaTime);
+    animateBossAttack(deltaTime)
     if (isAttacking) {
         animateAttack(deltaTime);
     } else if (isWalking) {
@@ -786,21 +886,22 @@ function gameLoop(timestamp) {
     } else {
         animateIdle(deltaTime);
     }
-        
+
     checkhover();
-    animateBotDrop()
-    
+    animateBotDrop(deltaTime);
+
     if (boss.isMoving) {
         animateBossWalking(deltaTime);
     } else {
         animateidleBoss(deltaTime);
     }
+
+    if (gameState === "playing") {
+        checkLaserHit();
+    }
+
     draw();
     requestAnimationFrame(gameLoop);
-
 }
 
-
 requestAnimationFrame(gameLoop);
-
-
