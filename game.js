@@ -18,7 +18,6 @@ let linkY;
 const linkWidth = 180;
 const linkHeight = 25;
 let dialogueIndex = 0;
-let storyStarted = false;
 
 let landingY ;
 let groundY ;
@@ -78,22 +77,41 @@ TeleportMusic.volume = 0.5;
 let maxhealth = 1000;
 let health = maxhealth;
 
-const bossImage = new Image()
-const bosswalking = new Image();
-const bossAttackImage = new Image();
-
-bossImage.src = "assets/enemy/Enemy-idle.png";
-bosswalking.src = "assets/enemy/Enemy-movement.png"
-bossAttackImage.src = "assets/enemy/Enemy-attack.png"
 
 
-let bossFrame = 0;
-let bossFrameTimer = 0;
-const bossFrameDuration = 125;
+const pumpkin1 = new Image();
+const pumpkin2 = new Image();
+const pumpkin3 = new Image();
+const pumpkin4 = new Image();
+const pumpkin5 = new Image();
 
-let bossWalkFrame = 0;
-let bossWalkFrameTimer = 0;
-const bossWalkFrameDuration = 100;
+pumpkin1.src = "assets/enemy/pumpkin1.png";
+pumpkin2.src = "assets/enemy/pumpkin2.png";
+pumpkin3.src = "assets/enemy/pumpkin3.png";
+pumpkin4.src = "assets/enemy/pumpkin4.png";
+pumpkin5.src = "assets/enemy/pumpkin5.png";
+
+let storyStarted = false;
+const pumpkinImages = [
+    pumpkin1,
+    pumpkin2,
+    pumpkin3,
+    pumpkin4,
+    pumpkin5
+];
+
+
+// let pumpkinFrame = 0;
+// let pumpkinFrameTimer = 0;
+// const pumpkinFrameDuration = 150;
+
+// let bossFrame = 0;
+// let bossFrameTimer = 0;
+// const bossFrameDuration = 125;
+
+// let bossWalkFrame = 0;
+// let bossWalkFrameTimer = 0;
+// const bossWalkFrameDuration = 100;
 
 
 let bossIsAttacking = false;
@@ -114,6 +132,9 @@ function resizeCanvas() {
     groundY = canvas.height - player.size - 10;
     boss.y = canvas.height - boss.size - 10;
 }
+let pumpkinFrame = 0;
+let pumpkinFrameTimer = 0;
+const pumpkinFrameDuration = 150;
 
 
 const player = {
@@ -307,26 +328,7 @@ function animateBotDrop(){
 
 
 function drawBoss() {
-    let image;
-    let frame;
-    let attackimage;
-
-    if (bossIsAttacking) {
-    attackimage = bossAttackImage;
-    frame = bossAttackFrame;
-    }
-    else if (boss.isMoving) {
-        image = bosswalking;
-        frame = bossWalkFrame;
-    }
-    else {
-        image = bossImage;
-        frame = bossFrame;
-    }
-
-
-    const frameX = (frame % 8) * 256;
-    const frameY = Math.floor(frame / 8) * 256;
+    const image = pumpkinImages[pumpkinFrame];
 
     ctx.save();
 
@@ -336,14 +338,14 @@ function drawBoss() {
 
         ctx.drawImage(
             image,
-            frameX, frameY, 256, 256,
-            0, boss.y, boss.size, boss.size
+            0, boss.y,
+            boss.size, boss.size
         );
     } else {
         ctx.drawImage(
             image,
-            frameX, frameY, 256, 256,
-            boss.x, boss.y, boss.size, boss.size
+            boss.x, boss.y,
+            boss.size, boss.size
         );
     }
 
@@ -463,6 +465,14 @@ function animateAttack(deltaTime){
     }
 }
 
+function animatePumpkin(deltaTime) {
+    pumpkinFrameTimer += deltaTime;
+
+    if (pumpkinFrameTimer >= pumpkinFrameDuration) {
+        pumpkinFrameTimer -= pumpkinFrameDuration;
+        pumpkinFrame = (pumpkinFrame + 1) % 5;
+    }
+}
 
 
 function checkLaserHit(){
@@ -627,23 +637,6 @@ function draw() {
 
 
 
-function animateBossWalking(deltaTime) {
-    bossWalkFrameTimer += deltaTime;
-
-    if (bossWalkFrameTimer >= bossWalkFrameDuration) {
-        bossWalkFrameTimer -= bossWalkFrameDuration;
-        bossWalkFrame = (bossWalkFrame + 1) % 8;
-    }
-}
-
-function animateidleBoss(deltaTime){
-    bossFrameTimer += deltaTime;
-
-    if(bossFrameTimer >= bossFrameDuration){
-        bossFrameTimer -= bossFrameDuration;
-        bossFrame = (bossFrame + 1) % 10
-    }
-}
 
 function animateIdle(deltaTime) {
     frameTimer += deltaTime;
@@ -878,7 +871,7 @@ function gameLoop(timestamp) {
     }
 
     animateTeleport(deltaTime);
-    animateBossAttack(deltaTime)
+    // animateBossAttack(deltaTime)
     if (isAttacking) {
         animateAttack(deltaTime);
     } else if (isWalking) {
@@ -890,11 +883,8 @@ function gameLoop(timestamp) {
     checkhover();
     animateBotDrop(deltaTime);
 
-    if (boss.isMoving) {
-        animateBossWalking(deltaTime);
-    } else {
-        animateidleBoss(deltaTime);
-    }
+    animatePumpkin(deltaTime);
+
 
     if (gameState === "playing") {
         checkLaserHit();
