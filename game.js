@@ -55,6 +55,13 @@ attackSprite.src = "assets/mech-bot/mech-bot-laser.png"
 
 
 
+
+let isAttacking = false;
+let attackFrame = 0;
+let attackFrameTimer = 0;
+const attackFrameDuration = 100;
+const totalAttackFrames = 10;
+
 const backgroundMusic = new Audio("assets/sounds/background.mp3");
 const ClickMusic = new Audio("assets/sounds/click.mp3");
 const JumpMusic = new Audio("assets/sounds/jump.mp3") ;
@@ -150,6 +157,12 @@ window.addEventListener("keydown", (e) => {
 
     if (e.key.toLowerCase() === "w" && !e.repeat && gameState === "playing"){
         teleport();
+    }
+
+    if (e.key.toLowerCase() === "j" && !e.repeat && gameState === "playing" && !isAttacking){
+        isAttacking = true;
+        attackFrame = 0;
+        attackFrameTimer = 0;
     }
 });
 
@@ -403,6 +416,24 @@ function drawBossHealthBar() {
 }
 
 
+function animateAttack(deltaTime){
+    if (!isAttacking) return;
+
+    attackFrameTimer += deltaTime;
+    if(attackFrameTimer >= attackFrameDuration){
+        attackFrameTimer -= attackFrameDuration;
+        attackFrame++
+
+        if (attackFrame >= totalAttackFrames){
+            isAttacking = false;
+            attackFrame = 0;
+            attackFrameTimer = 0;
+        }
+    }
+}
+
+
+
 
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -442,10 +473,31 @@ function draw() {
     }
 
     else if (playerSprite.complete && playerSprite.naturalWidth > 0) {
-        const activeSprite = isWalking ? walkingSprite : playerSprite;
-        const activeFrame = isWalking ? walkFrame : currentFrame;
-        const frameX = isWalking ? walkFrame * 256 : (currentFrame % 8) * 256;
-        const frameY = isWalking ? 0 : Math.floor(currentFrame / 8) * 256;
+        let activeSprite;
+        let activeFrame;
+        let frameX;
+        let frameY;
+
+        if (isAttacking){
+            activeSprite = attackSprite;
+            activeFrame = attackFrame;
+
+            frameX = (attackFrame % 8) * 256;
+            frameY = Math.floor(attackFrame / 8) * 256;
+        } else if (isWalking){
+            activeSprite = walkingSprite;
+            activeFrame = walkFrame;
+
+            frameX = walkFrame * 256;
+            frameY = 0;
+        } else {
+            activeSprite = playerSprite;
+            activeFrame = currentFrame;
+            
+            frameX = (currentFrame % 8) * 256;
+            frameY = Math.floor(currentFrame / 8) * 256;
+        }
+
     
 
         ctx.save();
@@ -727,11 +779,14 @@ function gameLoop(timestamp) {
     }
     animateTeleport(deltaTime);
 
-    if (isWalking) {
+    if (isAttacking) {
+        animateAttack(deltaTime);
+    } else if (isWalking) {
         animateWalk(deltaTime);
     } else {
         animateIdle(deltaTime);
     }
+        
     checkhover();
     animateBotDrop()
     
